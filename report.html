@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis Report - {{ analysis.job_title }} - ATS Resume Analyzer{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <a href="{{ url_for('dashboard') }}" style="color: var(--text-muted); font-size: 0.9rem; text-decoration: none;"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</a>
+        <h1 style="font-size: 2rem; font-weight: 800; margin-top: 0.5rem;">
+            ATS Evaluation: <span style="color: var(--primary);">{{ analysis.job_title }}</span>
+        </h1>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">
+            Resume: <strong>{{ analysis.resume.original_filename }}</strong> | Evaluated on {{ analysis.created_at.strftime('%b %d, %Y at %H:%M') }}
+        </p>
+    </div>
+    <div style="display: flex; gap: 0.75rem;" class="no-print">
+        <a href="{{ url_for('upload') }}" class="btn btn-secondary"><i class="fa-solid fa-rotate-right"></i> Analyze Another</a>
+        <button onclick="window.print();" class="btn btn-primary"><i class="fa-solid fa-print"></i> Export / Print</button>
+    </div>
+</div>
+
+<!-- Tab Navigation -->
+<div class="report-tabs no-print">
+    <button class="tab-btn active" onclick="switchTab(event, 'score-tab')">
+        <i class="fa-solid fa-chart-pie"></i> ATS Score & Audit
+    </button>
+    <button class="tab-btn" onclick="switchTab(event, 'cover-letter-tab')">
+        <i class="fa-solid fa-envelope-open-text"></i> AI Cover Letter
+    </button>
+    <button class="tab-btn" onclick="switchTab(event, 'rewrite-tab')">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> AI Rewrite Advice
+    </button>
+</div>
+
+<!-- TAB 1: ATS Scoring & Audit -->
+<div id="score-tab" class="tab-content active">
+    <!-- Score Header Cards Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        
+        <!-- Overall ATS Score Circle Card -->
+        <div class="card" style="text-align: center;">
+            <h3 style="font-size: 1rem; color: var(--text-muted); font-weight: 600; margin-bottom: 1rem;">OVERALL ATS MATCH SCORE</h3>
+            <div class="score-circle-container">
+                <div class="score-circle" style="--score: {{ analysis.overall_score }};">
+                    <div class="score-text">
+                        {{ analysis.overall_score }}<span>%</span>
+                    </div>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; font-weight: 700; color: {% if analysis.overall_score >= 75 %}#059669{% elif analysis.overall_score >= 50 %}#d97706{% else %}#dc2626{% endif %}; font-size: 1.1rem;">
+                {% if analysis.overall_score >= 75 %}
+                    <i class="fa-solid fa-circle-check"></i> Great Fit for ATS Screening!
+                {% elif analysis.overall_score >= 50 %}
+                    <i class="fa-solid fa-circle-exclamation"></i> Moderate Match - Needs Optimization
+                {% else %}
+                    <i class="fa-solid fa-triangle-exclamation"></i> Low Match - High Risk of Rejection
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- Breakdown Stats Card -->
+        <div class="card" style="display: flex; flex-direction: column; justify-content: center; gap: 1.5rem;">
+            <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span style="font-weight: 600; font-size: 0.95rem;"><i class="fa-solid fa-bullseye" style="color: var(--primary);"></i> Skill Keyword Match</span>
+                    <span style="font-weight: 800; color: var(--primary);">{{ analysis.skills_score }}%</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" style="width: {{ analysis.skills_score }}%;"></div>
+                </div>
+            </div>
+
+            <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span style="font-weight: 600; font-size: 0.95rem;"><i class="fa-solid fa-list-check" style="color: var(--secondary);"></i> ATS Readability & Structure</span>
+                    <span style="font-weight: 800; color: var(--secondary);">{{ analysis.ats_score }}%</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" style="width: {{ analysis.ats_score }}%; background: linear-gradient(90deg, var(--secondary), var(--accent));"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Skill Analysis Grid -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;" class="report-grid">
+        
+        <!-- Matched Skills Card -->
+        <div class="card">
+            <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem; color: var(--success);">
+                <i class="fa-solid fa-circle-check"></i> Matched Skills ({{ analysis.matched_skills|length }})
+            </h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+                These required skills were successfully detected in your uploaded resume:
+            </p>
+
+            {% if analysis.matched_skills %}
+                <div>
+                    {% for skill in analysis.matched_skills %}
+                        <span class="skill-badge skill-matched">
+                            <i class="fa-solid fa-check"></i> {{ skill }}
+                        </span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p style="color: var(--text-muted); font-size: 0.9rem;">No matching target skills detected.</p>
+            {% endif %}
+        </div>
+
+        <!-- Missing Skills Card -->
+        <div class="card">
+            <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem; color: var(--danger);">
+                <i class="fa-solid fa-circle-xmark"></i> Missing Keywords ({{ analysis.missing_skills|length }})
+            </h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+                Add these important skills to your resume to boost your ATS ranking:
+            </p>
+
+            {% if analysis.missing_skills %}
+                <div>
+                    {% for skill in analysis.missing_skills %}
+                        <span class="skill-badge skill-missing">
+                            <i class="fa-solid fa-plus"></i> {{ skill }}
+                        </span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p style="color: var(--success); font-size: 0.9rem; font-weight: 600;"><i class="fa-solid fa-star"></i> Outstanding! All detected target skills were found in your resume.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Formatting & Readability Checks -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem;">
+            <i class="fa-solid fa-square-poll-vertical" style="color: var(--info);"></i> ATS Formatting & Structural Audit
+        </h3>
+
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+            {% for fb in analysis.formatting_feedback %}
+                <div style="display: flex; gap: 1rem; align-items: flex-start; padding: 1rem; border-radius: var(--radius-md); background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color);">
+                    <div style="font-size: 1.25rem; margin-top: 0.1rem;">
+                        {% if fb.status == 'success' %}
+                            <i class="fa-solid fa-circle-check" style="color: var(--success);"></i>
+                        {% elif fb.status == 'warning' %}
+                            <i class="fa-solid fa-triangle-exclamation" style="color: var(--warning);"></i>
+                        {% else %}
+                            <i class="fa-solid fa-circle-xmark" style="color: var(--danger);"></i>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.25rem;">{{ fb.title }}</h4>
+                        <p style="font-size: 0.88rem; color: var(--text-muted);">{{ fb.message }}</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Extracted Text Drawer / Accordion -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="document.getElementById('extracted-text-box').classList.toggle('hidden');">
+            <h3 style="font-size: 1.1rem; font-weight: 700;">
+                <i class="fa-solid fa-file-code"></i> View Extracted Text from Resume
+            </h3>
+            <span style="color: var(--primary); font-size: 0.9rem; font-weight: 600;"><i class="fa-solid fa-chevron-down"></i> Toggle Text</span>
+        </div>
+        
+        <div id="extracted-text-box" class="hidden" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+            <pre style="background: rgba(15, 23, 42, 0.8); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.85rem; font-family: monospace; white-space: pre-wrap; word-break: break-word; max-height: 400px; overflow-y: auto;">{{ analysis.resume.extracted_text or 'No text extracted.' }}</pre>
+        </div>
+    </div>
+</div>
+
+<!-- TAB 2: AI Cover Letter -->
+<div id="cover-letter-tab" class="tab-content">
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;" class="no-print">
+            <h3 style="font-size: 1.25rem; font-weight: 700;"><i class="fa-solid fa-envelope-open-text" style="color: var(--primary);"></i> AI Tailored Cover Letter</h3>
+            <button onclick="copyCoverLetter()" class="btn btn-secondary btn-sm"><i class="fa-solid fa-copy"></i> Copy to Clipboard</button>
+        </div>
+        <pre id="cover-letter-text" style="background: rgba(255, 255, 255, 0.5); border: 1px solid var(--border-color); padding: 1.5rem; border-radius: var(--radius-md); font-family: inherit; font-size: 1rem; color: var(--text-main); white-space: pre-wrap; word-break: break-word; line-height: 1.6;">{{ analysis.cover_letter or 'AI Cover letter generation requires a valid GEMINI_API_KEY. Configure key to generate.' }}</pre>
+    </div>
+</div>
+
+<!-- TAB 3: AI Rewrite Advice -->
+<div id="rewrite-tab" class="tab-content">
+    <div class="card">
+        <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;"><i class="fa-solid fa-wand-magic-sparkles" style="color: var(--primary);"></i> AI Resume Rewrite & Optimization Suggestions</h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">Gemini has analyzed your content and proposed structured optimization edits matching the job description requirements.</p>
+        
+        {% if analysis.ai_suggestions %}
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                {% for sug in analysis.ai_suggestions %}
+                    <div class="repeater-item" style="background: rgba(255, 255, 255, 0.25); border: 1px solid var(--border-color); padding: 1.5rem; border-radius: var(--radius-md);">
+                        <span style="font-size: 0.75rem; background: var(--primary-glow); color: var(--primary); padding: 0.25rem 0.65rem; border-radius: var(--radius-full); font-weight: 700; text-transform: uppercase;">
+                            Section: {{ sug.section_name }}
+                        </span>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;" class="rewrite-grid">
+                            <div style="background: rgba(239, 68, 68, 0.04); border: 1px solid rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: var(--radius-md);">
+                                <strong style="font-size: 0.85rem; color: var(--danger); display: block; margin-bottom: 0.5rem;"><i class="fa-solid fa-xmark"></i> Current Resume Text</strong>
+                                <p style="font-size: 0.9rem; color: var(--text-muted); font-style: italic;">"{{ sug.current_text }}"</p>
+                            </div>
+                            
+                            <div style="background: rgba(5, 150, 105, 0.04); border: 1px solid rgba(5, 150, 105, 0.1); padding: 1rem; border-radius: var(--radius-md);">
+                                <strong style="font-size: 0.85rem; color: var(--success); display: block; margin-bottom: 0.5rem;"><i class="fa-solid fa-check"></i> Suggested ATS-Friendly Rewrite</strong>
+                                <p style="font-size: 0.9rem; color: var(--text-main); font-weight: 600;">"{{ sug.suggested_text }}"</p>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted); display: flex; gap: 0.5rem; align-items: flex-start;">
+                            <i class="fa-solid fa-circle-info" style="color: var(--primary); margin-top: 0.15rem;"></i>
+                            <span><strong>ATS Impact:</strong> {{ sug.reason }}</span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 3rem 0; color: var(--text-muted);">
+                <i class="fa-solid fa-brain" style="font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                <p>AI suggestions are only generated when a valid GEMINI_API_KEY is configured.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<style>
+.hidden { display: none; }
+@media (max-width: 768px) {
+    .report-grid, .rewrite-grid { grid-template-columns: 1fr !important; }
+}
+</style>
+<script>
+    function switchTab(evt, tabId) {
+        // Hide all tab contents
+        const tabContents = document.querySelectorAll('.tab-content');
+        tabContents.forEach(content => content.classList.remove('active'));
+
+        // Deactivate all tab buttons
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        tabBtns.forEach(btn => btn.classList.remove('active'));
+
+        // Show selected tab content and activate button
+        document.getElementById(tabId).classList.add('active');
+        evt.currentTarget.classList.add('active');
+    }
+
+    function copyCoverLetter() {
+        const text = document.getElementById('cover-letter-text').innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            alert('Cover letter copied to clipboard!');
+        }).catch(err => {
+            console.error('Failed to copy text: ', err);
+        });
+    }
+</script>
+{% endblock %}

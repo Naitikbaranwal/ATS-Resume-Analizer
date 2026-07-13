@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Upload & Analyze Resume - ATS Resume Analyzer{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 1rem auto;">
+    <div style="margin-bottom: 2rem;">
+        <h1 style="font-size: 2rem; font-weight: 800;"><i class="fa-solid fa-cloud-arrow-up" style="color: var(--primary);"></i> Analyze Resume</h1>
+        <p style="color: var(--text-muted);">Upload your resume and paste the job description to calculate your ATS match score.</p>
+    </div>
+
+    <div class="card">
+        <form action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data" id="upload-form">
+            
+            <!-- Step 1: Job Info -->
+            <div class="form-group">
+                <label for="job_title" class="form-label"><i class="fa-solid fa-briefcase"></i> Target Job Title</label>
+                <input type="text" id="job_title" name="job_title" class="form-control" placeholder="e.g. Full Stack Python Developer, Frontend Developer" required>
+            </div>
+
+            <div class="form-group">
+                <label for="job_description" class="form-label"><i class="fa-solid fa-file-lines"></i> Job Description / Requirements</label>
+                <textarea id="job_description" name="job_description" class="form-control" placeholder="Paste the complete job description, requirements, and required skills here..." required></textarea>
+            </div>
+
+            <!-- Step 2: Resume File Upload -->
+            <div class="form-group">
+                <label class="form-label"><i class="fa-solid fa-file-arrow-up"></i> Upload Resume File (PDF, DOCX, TXT)</label>
+                <div class="upload-dropzone" id="dropzone">
+                    <div class="upload-icon">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                    </div>
+                    <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;" id="dropzone-text">Drag & Drop your resume here or click to browse</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);" id="dropzone-subtext">Supported formats: .pdf, .docx, .txt (Max size: 16MB)</p>
+                    <input type="file" id="resume_file" name="resume_file" class="file-input-hidden" accept=".pdf,.docx,.txt" required>
+                </div>
+            </div>
+
+            <!-- Selected File Info -->
+            <div id="file-preview" style="display: none; margin-bottom: 1.5rem; background: rgba(99, 102, 241, 0.1); border: 1px solid var(--primary-glow); padding: 0.85rem 1.25rem; border-radius: var(--radius-md); align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <i class="fa-solid fa-file-lines" style="font-size: 1.5rem; color: var(--primary);"></i>
+                    <div>
+                        <div id="file-preview-name" style="font-weight: 700; font-size: 0.95rem;">resume.pdf</div>
+                        <div id="file-preview-size" style="font-size: 0.8rem; color: var(--text-muted);">245 KB</div>
+                    </div>
+                </div>
+                <button type="button" id="remove-file-btn" class="btn btn-secondary btn-sm" style="color: var(--danger);"><i class="fa-solid fa-trash"></i> Remove</button>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 1rem;" id="submit-btn">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Run ATS Resume Analysis
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+{% endblock %}

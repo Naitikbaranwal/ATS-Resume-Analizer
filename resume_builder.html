@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+
+{% block title %}ATS Resume Builder - ATS Resume Analyzer{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 1rem auto;">
+    <div style="margin-bottom: 2rem;">
+        <h1 style="font-size: 2.2rem; font-weight: 800;"><i class="fa-solid fa-file-pen" style="color: var(--primary);"></i> ATS Resume Builder</h1>
+        <p style="color: var(--text-muted);">Fill in your details step-by-step to generate a single-column, standard ATS-friendly resume layout optimized for print and PDF.</p>
+    </div>
+
+    <!-- Step Progress Indicator -->
+    <div class="step-indicator">
+        <div class="step-dot active" id="dot-1">1</div>
+        <div class="step-dot" id="dot-2">2</div>
+        <div class="step-dot" id="dot-3">3</div>
+        <div class="step-dot" id="dot-4">4</div>
+    </div>
+
+    <div class="card">
+        <form action="{{ url_for('resume_builder') }}" method="POST" id="builder-form">
+            
+            <!-- STEP 1: Contact Information & Summary -->
+            <div class="builder-step active" id="step-1">
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem;"><i class="fa-solid fa-address-card" style="color: var(--primary);"></i> Step 1: Contact Details & Summary</h3>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" class="report-grid">
+                    <div class="form-group">
+                        <label for="name" class="form-label">Full Name</label>
+                        <input type="text" id="name" name="name" class="form-control" placeholder="John Doe" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" id="email" name="email" class="form-control" placeholder="john.doe@example.com" required>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" class="report-grid">
+                    <div class="form-group">
+                        <label for="phone" class="form-label">Phone Number</label>
+                        <input type="text" id="phone" name="phone" class="form-control" placeholder="(555) 019-2834" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="linkedin" class="form-label">LinkedIn URL</label>
+                        <input type="url" id="linkedin" name="linkedin" class="form-control" placeholder="https://linkedin.com/in/johndoe">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" class="report-grid">
+                    <div class="form-group">
+                        <label for="github" class="form-label">GitHub Portfolio URL</label>
+                        <input type="url" id="github" name="github" class="form-control" placeholder="https://github.com/johndoe">
+                    </div>
+                    <div class="form-group">
+                        <label for="website" class="form-label">Personal Website / Portfolio</label>
+                        <input type="url" id="website" name="website" class="form-control" placeholder="https://johndoe.dev">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="summary" class="form-label">Professional Summary</label>
+                    <textarea id="summary" name="summary" class="form-control" placeholder="Briefly describe your career goal, core expertise, and key accomplishments in 3-4 sentences..." required></textarea>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; margin-top: 2rem;">
+                    <button type="button" class="btn btn-primary" onclick="nextStep(1)">Next Step <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- STEP 2: Work Experience -->
+            <div class="builder-step" id="step-2">
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;"><i class="fa-solid fa-briefcase" style="color: var(--primary);"></i> Step 2: Work History</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">Add your job experience starting from your most recent position.</p>
+
+                <div id="experience-container">
+                    <!-- Repeater Item -->
+                    <div class="repeater-item">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" class="report-grid">
+                            <div class="form-group">
+                                <label class="form-label">Job Title</label>
+                                <input type="text" name="job_title[]" class="form-control" placeholder="e.g. Senior Software Engineer" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Company & Location</label>
+                                <input type="text" name="company[]" class="form-control" placeholder="e.g. Tech Solutions Inc., New York" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Employment Dates (e.g. June 2023 - Present)</label>
+                            <input type="text" name="exp_dates[]" class="form-control" placeholder="June 2023 - Present" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Description / Core Accomplishments (HTML or text bullet points)</label>
+                            <textarea name="exp_desc[]" class="form-control" placeholder="Describe achievements, responsibilities, and technologies used. E.g.
+• Developed a scalable Python backend service, boosting API performance by 30%.
+• Led a team of 4 engineers to release a new React.js web platform." required></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-secondary btn-sm" onclick="addExperience()" style="margin-bottom: 1.5rem;">
+                    <i class="fa-solid fa-plus"></i> Add More Experience
+                </button>
+
+                <div style="display: flex; justify-content: space-between; margin-top: 2rem;">
+                    <button type="button" class="btn btn-secondary" onclick="prevStep(2)"><i class="fa-solid fa-arrow-left"></i> Previous</button>
+                    <button type="button" class="btn btn-primary" onclick="nextStep(2)">Next Step <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- STEP 3: Education -->
+            <div class="builder-step" id="step-3">
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;"><i class="fa-solid fa-graduation-cap" style="color: var(--primary);"></i> Step 3: Education</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">Detail your academic credentials and degrees.</p>
+
+                <div id="education-container">
+                    <div class="repeater-item">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" class="report-grid">
+                            <div class="form-group">
+                                <label class="form-label">Degree & Major</label>
+                                <input type="text" name="degree[]" class="form-control" placeholder="e.g. Bachelor of Science in Computer Science" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">University / Institution & Location</label>
+                                <input type="text" name="school[]" class="form-control" placeholder="e.g. Boston University, Boston" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Graduation Year / Dates (e.g. 2019 - 2023)</label>
+                            <input type="text" name="edu_dates[]" class="form-control" placeholder="e.g. 2019 - 2023" required>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-secondary btn-sm" onclick="addEducation()" style="margin-bottom: 1.5rem;">
+                    <i class="fa-solid fa-plus"></i> Add More Education
+                </button>
+
+                <div style="display: flex; justify-content: space-between; margin-top: 2rem;">
+                    <button type="button" class="btn btn-secondary" onclick="prevStep(3)"><i class="fa-solid fa-arrow-left"></i> Previous</button>
+                    <button type="button" class="btn btn-primary" onclick="nextStep(3)">Next Step <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- STEP 4: Skills & Projects -->
+            <div class="builder-step" id="step-4">
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem;"><i class="fa-solid fa-code" style="color: var(--primary);"></i> Step 4: Skills & Key Projects</h3>
+
+                <!-- Skills List -->
+                <div class="form-group">
+                    <label for="skills" class="form-label">Technical Skills (Comma-separated list)</label>
+                    <input type="text" id="skills" name="skills" class="form-control" placeholder="Python, SQL, JavaScript, React, Flask, Docker, Git, REST APIs" required>
+                    <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.25rem;">E.g. Python, SQL, JavaScript, React, Git, Docker</p>
+                </div>
+
+                <!-- Projects Repeater -->
+                <h4 style="font-size: 1.1rem; font-weight: 700; margin: 2rem 0 0.5rem 0;"><i class="fa-solid fa-folder-tree" style="color: var(--primary);"></i> Projects (Optional)</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Highlight personal or professional projects illustrating your skills.</p>
+
+                <div id="projects-container">
+                    <div class="repeater-item">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" class="report-grid">
+                            <div class="form-group">
+                                <label class="form-label">Project Name</label>
+                                <input type="text" name="project_name[]" class="form-control" placeholder="e.g. ATS Resume Analyzer Web App">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Technologies Used</label>
+                                <input type="text" name="project_tech[]" class="form-control" placeholder="e.g. Flask, Python, SQLite, Chart.js">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Project Description</label>
+                            <textarea name="project_desc[]" class="form-control" placeholder="Describe the project goal, scope, and your personal contributions..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-secondary btn-sm" onclick="addProject()" style="margin-bottom: 1.5rem;">
+                    <i class="fa-solid fa-plus"></i> Add More Projects
+                </button>
+
+                <div style="display: flex; justify-content: space-between; margin-top: 2rem;">
+                    <button type="button" class="btn btn-secondary" onclick="prevStep(4)"><i class="fa-solid fa-arrow-left"></i> Previous</button>
+                    <button type="submit" class="btn btn-primary btn-lg"><i class="fa-solid fa-wand-magic-sparkles"></i> Generate ATS Resume PDF</button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function nextStep(currentStep) {
+        // Simple Form Validation per step
+        const stepDiv = document.getElementById(`step-${currentStep}`);
+        const inputs = stepDiv.querySelectorAll('input[required], textarea[required]');
+        let valid = true;
+        
+        inputs.forEach(input => {
+            if (!input.value.trim()) {
+                valid = false;
+                input.style.borderColor = 'var(--danger)';
+            } else {
+                input.style.borderColor = 'rgba(255, 255, 255, 0.8)';
+            }
+        });
+
+        if (!valid) {
+            alert('Please fill out all required fields marked in red.');
+            return;
+        }
+
+        // Navigate step
+        stepDiv.classList.remove('active');
+        document.getElementById(`step-${currentStep + 1}`).classList.add('active');
+
+        // Update indicators
+        document.getElementById(`dot-${currentStep}`).classList.remove('active');
+        document.getElementById(`dot-${currentStep}`).classList.add('completed');
+        document.getElementById(`dot-${currentStep + 1}`).classList.add('active');
+    }
+
+    function prevStep(currentStep) {
+        document.getElementById(`step-${currentStep}`).classList.remove('active');
+        document.getElementById(`step-${currentStep - 1}`).classList.add('active');
+
+        // Update indicators
+        document.getElementById(`dot-${currentStep}`).classList.remove('active');
+        document.getElementById(`dot-${currentStep - 1}`).classList.remove('completed');
+        document.getElementById(`dot-${currentStep - 1}`).classList.add('active');
+    }
+
+    // Repeater adding logic
+    function addExperience() {
+        const container = document.getElementById('experience-container');
+        const item = document.createElement('div');
+        item.className = 'repeater-item';
+        item.innerHTML = `
+            <button type="button" class="btn btn-danger btn-sm remove-repeater-btn" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" class="report-grid">
+                <div class="form-group">
+                    <label class="form-label">Job Title</label>
+                    <input type="text" name="job_title[]" class="form-control" placeholder="e.g. Senior Software Engineer" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Company & Location</label>
+                    <input type="text" name="company[]" class="form-control" placeholder="e.g. Tech Solutions Inc., New York" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Employment Dates (e.g. June 2023 - Present)</label>
+                <input type="text" name="exp_dates[]" class="form-control" placeholder="June 2023 - Present" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Description / Core Accomplishments (HTML or text bullet points)</label>
+                <textarea name="exp_desc[]" class="form-control" placeholder="Describe achievements, responsibilities, and technologies used." required></textarea>
+            </div>
+        `;
+        container.appendChild(item);
+    }
+
+    function addEducation() {
+        const container = document.getElementById('education-container');
+        const item = document.createElement('div');
+        item.className = 'repeater-item';
+        item.innerHTML = `
+            <button type="button" class="btn btn-danger btn-sm remove-repeater-btn" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" class="report-grid">
+                <div class="form-group">
+                    <label class="form-label">Degree & Major</label>
+                    <input type="text" name="degree[]" class="form-control" placeholder="e.g. Bachelor of Science in Computer Science" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">University / Institution & Location</label>
+                    <input type="text" name="school[]" class="form-control" placeholder="e.g. Boston University, Boston" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Graduation Year / Dates (e.g. 2019 - 2023)</label>
+                <input type="text" name="edu_dates[]" class="form-control" placeholder="e.g. 2019 - 2023" required>
+            </div>
+        `;
+        container.appendChild(item);
+    }
+
+    function addProject() {
+        const container = document.getElementById('projects-container');
+        const item = document.createElement('div');
+        item.className = 'repeater-item';
+        item.innerHTML = `
+            <button type="button" class="btn btn-danger btn-sm remove-repeater-btn" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" class="report-grid">
+                <div class="form-group">
+                    <label class="form-label">Project Name</label>
+                    <input type="text" name="project_name[]" class="form-control" placeholder="e.g. ATS Resume Analyzer Web App">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Technologies Used</label>
+                    <input type="text" name="project_tech[]" class="form-control" placeholder="e.g. Flask, Python, SQLite">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Project Description</label>
+                <textarea name="project_desc[]" class="form-control" placeholder="Describe the project goal, scope, and your personal contributions..."></textarea>
+            </div>
+        `;
+        container.appendChild(item);
+    }
+</script>
+{% endblock %}

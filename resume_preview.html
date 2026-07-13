@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Preview - {{ resume.name }}</title>
+    <!-- Custom CSS containing print media stylesheets -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Screen preview styling matching standard resume page (letter size) */
+        body {
+            background: #f1f5f9;
+            color: #1e293b;
+            padding: 2rem 1rem;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .action-header {
+            max-width: 800px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            background: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            box-sizing: border-box;
+        }
+
+        .resume-page {
+            width: 8.5in;
+            min-height: 11in;
+            background: white;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            padding: 0.75in;
+            box-sizing: border-box;
+            font-family: 'Times New Roman', Times, serif;
+            color: black;
+            font-size: 11pt;
+            line-height: 1.4;
+        }
+
+        /* ATS Typography Rules */
+        .resume-name {
+            font-size: 20pt;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .resume-contact {
+            text-align: center;
+            font-size: 10pt;
+            margin-bottom: 20px;
+            color: #334155;
+        }
+
+        .resume-contact span {
+            margin: 0 6px;
+        }
+
+        .resume-section-title {
+            font-size: 12pt;
+            font-weight: bold;
+            border-bottom: 1.5px solid black;
+            text-transform: uppercase;
+            margin-top: 18px;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .resume-item {
+            margin-bottom: 10px;
+        }
+
+        .resume-item-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 11pt;
+        }
+
+        .resume-item-company {
+            font-weight: bold;
+            font-style: italic;
+        }
+
+        .resume-item-desc {
+            font-size: 10.5pt;
+            margin-top: 4px;
+            padding-left: 14px;
+            white-space: pre-wrap;
+        }
+
+        .resume-skills-list {
+            font-size: 10.5pt;
+        }
+
+        @media print {
+            body {
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .action-header {
+                display: none !important;
+            }
+            .resume-page {
+                box-shadow: none !important;
+                padding: 0.5in !important;
+                width: 100% !important;
+                min-height: auto !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Actions Dock (Screen only) -->
+    <div class="action-header no-print">
+        <div>
+            <a href="{{ url_for('resume_builder') }}" class="btn btn-secondary btn-sm">
+                <i class="fa-solid fa-arrow-left"></i> Edit Resume Form
+            </a>
+        </div>
+        <div style="font-weight: 700; color: #4f46e5;"><i class="fa-solid fa-file-pdf"></i> Standard ATS Vector Preview</div>
+        <div>
+            <button onclick="window.print();" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-download"></i> Save / Print PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- Resume Page (Letter Size Sheet) -->
+    <div class="resume-page resume-sheet">
+        
+        <!-- Header Section -->
+        <div class="resume-name">{{ resume.name }}</div>
+        <div class="resume-contact">
+            {{ resume.phone }} &bull; {{ resume.email }}
+            {% if resume.website %}&bull; {{ resume.website }}{% endif %}
+            {% if resume.linkedin %}&bull; {{ resume.linkedin }}{% endif %}
+            {% if resume.github %}&bull; {{ resume.github }}{% endif %}
+        </div>
+
+        <!-- Summary Section -->
+        {% if resume.summary %}
+            <div class="resume-section-title">Professional Summary</div>
+            <p style="margin: 0; font-size: 10.5pt; text-align: justify;">{{ resume.summary }}</p>
+        {% endif %}
+
+        <!-- Work Experience Section -->
+        {% if resume.experience %}
+            <div class="resume-section-title">Professional Experience</div>
+            {% for job in resume.experience %}
+                <div class="resume-item">
+                    <div class="resume-item-header">
+                        <div>{{ job.title }}</div>
+                        <div style="font-weight: normal; font-size: 10pt;">{{ job.dates }}</div>
+                    </div>
+                    <div class="resume-item-company">{{ job.company }}</div>
+                    <div class="resume-item-desc">{{ job.desc }}</div>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Projects Section -->
+        {% if resume.projects %}
+            <div class="resume-section-title">Key Projects</div>
+            {% for proj in resume.projects %}
+                <div class="resume-item">
+                    <div class="resume-item-header">
+                        <div>{{ proj.name }}</div>
+                        {% if proj.tech %}
+                            <div style="font-weight: normal; font-style: italic; font-size: 10pt;">{{ proj.tech }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="resume-item-desc" style="padding-left: 0; margin-top: 2px;">{{ proj.desc }}</div>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Education Section -->
+        {% if resume.education %}
+            <div class="resume-section-title">Education</div>
+            {% for edu in resume.education %}
+                <div class="resume-item">
+                    <div class="resume-item-header">
+                        <div>{{ edu.degree }}</div>
+                        <div style="font-weight: normal; font-size: 10pt;">{{ edu.dates }}</div>
+                    </div>
+                    <div class="resume-item-company" style="font-style: normal; font-weight: normal;">{{ edu.school }}</div>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Skills Section -->
+        {% if resume.skills %}
+            <div class="resume-section-title">Skills & Proficiencies</div>
+            <div class="resume-skills-list">
+                <strong>Technical Skills:</strong> {{ resume.skills | join(', ') }}
+            </div>
+        {% endif %}
+
+    </div>
+
+</body>
+</html>

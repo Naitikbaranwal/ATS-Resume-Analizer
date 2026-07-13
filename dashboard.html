@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - ATS Resume Analyzer{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1 style="font-size: 2rem; font-weight: 800;">Candidate Dashboard</h1>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">Welcome back, <strong style="color: var(--primary);">{{ current_user.username }}</strong>! Here is your resume performance overview.</p>
+    </div>
+    <a href="{{ url_for('upload') }}" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> Analyze New Resume
+    </a>
+</div>
+
+<!-- Stats Grid -->
+<div class="stats-grid">
+    <div class="card stat-card">
+        <div class="stat-icon" style="background: rgba(99, 102, 241, 0.15); color: var(--primary);">
+            <i class="fa-solid fa-file-pdf"></i>
+        </div>
+        <div class="stat-info">
+            <h4>Total Resumes</h4>
+            <div class="stat-value">{{ total_resumes }}</div>
+        </div>
+    </div>
+
+    <div class="card stat-card">
+        <div class="stat-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--success);">
+            <i class="fa-solid fa-chart-line"></i>
+        </div>
+        <div class="stat-info">
+            <h4>Average Score</h4>
+            <div class="stat-value">{{ avg_score }}%</div>
+        </div>
+    </div>
+
+    <div class="card stat-card">
+        <div class="stat-icon" style="background: rgba(245, 158, 11, 0.15); color: var(--warning);">
+            <i class="fa-solid fa-trophy"></i>
+        </div>
+        <div class="stat-info">
+            <h4>Best Match Score</h4>
+            <div class="stat-value">{{ highest_score }}%</div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart Card -->
+<div class="card" style="margin-bottom: 2rem;">
+    <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.25rem;">
+        <i class="fa-solid fa-chart-line" style="color: var(--primary);"></i> ATS Match Score Progression
+    </h3>
+    <div style="position: relative; height: 300px; width: 100%;">
+        <canvas id="progressionChart"></canvas>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;" class="dashboard-layout">
+    <!-- Recent Reports -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <h3 style="font-size: 1.2rem; font-weight: 700;"><i class="fa-solid fa-clock-rotate-left"></i> Recent Evaluations</h3>
+            <a href="{{ url_for('resume_list') }}" style="font-size: 0.85rem; font-weight: 600;">View All</a>
+        </div>
+
+        {% if recent_analyses %}
+            <div style="overflow-x: auto;">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Job Target</th>
+                            <th>Resume File</th>
+                            <th>Score</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in recent_analyses %}
+                        <tr>
+                            <td>
+                                <strong style="color: var(--text-main);">{{ a.job_title }}</strong>
+                            </td>
+                            <td>
+                                <span style="color: var(--text-muted); font-size: 0.85rem;"><i class="fa-solid fa-paperclip"></i> {{ a.resume.original_filename }}</span>
+                            </td>
+                            <td>
+                                <span class="skill-badge {% if a.overall_score >= 75 %}skill-matched{% elif a.overall_score >= 50 %}skill-warning{% else %}skill-missing{% endif %}">
+                                    {{ a.overall_score }}%
+                                </span>
+                            </td>
+                            <td style="color: var(--text-dim); font-size: 0.85rem;">
+                                {{ a.created_at.strftime('%b %d, %Y') }}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('report', analysis_id=a.id) }}" class="btn btn-secondary btn-sm">
+                                    Report
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+                <i class="fa-solid fa-folder-open" style="font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                <p>No resume analysis reports found yet.</p>
+                <a href="{{ url_for('upload') }}" class="btn btn-primary btn-sm" style="margin-top: 1rem;">Upload Resume Now</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Top Missing Skills Widget -->
+    <div class="card">
+        <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem;">
+            <i class="fa-solid fa-triangle-exclamation" style="color: var(--warning);"></i> Common Skill Gaps
+        </h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+            Keywords most frequently missing across your targeted job roles:
+        </p>
+
+        {% if top_missing_skills %}
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                {% for skill_name, count in top_missing_skills %}
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                        <span style="font-weight: 600; font-size: 0.9rem; color: #f87171;"><i class="fa-solid fa-xmark"></i> {{ skill_name }}</span>
+                        <span style="font-size: 0.75rem; background: var(--danger-bg); color: var(--danger); padding: 0.2rem 0.5rem; border-radius: var(--radius-full); font-weight: 700;">Missing in {{ count }} job{% if count > 1 %}s{% endif %}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 2rem 0; color: var(--text-muted); font-size: 0.85rem;">
+                <p>No skill gaps identified yet. Upload more resumes to see AI trends.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Parse the dynamic chart data passed from Python
+        const rawData = {{ chart_data | tojson | safe }};
+        
+        if (!rawData || rawData.length === 0) {
+            document.getElementById('progressionChart').parentElement.innerHTML = `
+                <div style="text-align: center; padding: 3rem 0; color: var(--text-dim);">
+                    <i class="fa-solid fa-chart-line" style="font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <p>Not enough data points yet. Run more resume analyses to view score trends.</p>
+                </div>
+            `;
+            return;
+        }
+
+        const labels = rawData.map(item => {
+            const d = new Date(item.date);
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        });
+        const scores = rawData.map(item => item.score);
+
+        const ctx = document.getElementById('progressionChart').getContext('2d');
+        
+        // Custom gradient for line fill
+        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(79, 70, 229, 0.25)');
+        gradient.addColorStop(1, 'rgba(79, 70, 229, 0.01)');
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'ATS Match Score (%)',
+                    data: scores,
+                    borderColor: '#4f46e5',
+                    borderWidth: 3,
+                    backgroundColor: gradient,
+                    fill: true,
+                    tension: 0.35,
+                    pointBackgroundColor: '#4f46e5',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        titleColor: '#0f172a',
+                        bodyColor: '#334155',
+                        borderColor: '#e2e8f0',
+                        borderWidth: 1,
+                        padding: 10,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                return `Score: ${context.parsed.y}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 100,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.04)'
+                        },
+                        ticks: {
+                            color: '#64748b',
+                            font: {
+                                family: 'Plus Jakarta Sans',
+                                weight: '500'
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#64748b',
+                            font: {
+                                family: 'Plus Jakarta Sans',
+                                weight: '500'
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

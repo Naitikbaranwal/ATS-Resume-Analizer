@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}ATS Resume Analyzer - Optimize Your Resume for Top Jobs{% endblock %}
+
+{% block content %}
+<div style="text-align: center; padding: 4rem 1rem; max-width: 800px; margin: 0 auto;">
+    <div style="display: inline-block; padding: 0.4rem 1rem; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: var(--radius-full); color: var(--primary); font-size: 0.9rem; font-weight: 600; margin-bottom: 1.5rem;">
+        <i class="fa-solid fa-bolt"></i> Intelligent Resume Matcher & ATS Optimizer
+    </div>
+    
+    <h1 style="font-size: 3.2rem; font-weight: 800; line-height: 1.15; margin-bottom: 1.2rem; background: linear-gradient(135deg, #0f172a, #4f46e5); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        Beat the Applicant Tracking System & Land Interviews
+    </h1>
+    
+    <p style="font-size: 1.2rem; color: var(--text-muted); margin-bottom: 2.5rem;">
+        Upload your resume and target job description. Our automated ATS analyzer identifies missing skills, keyword gaps, and formatting issues instantly.
+    </p>
+    
+    <div style="display: flex; gap: 1rem; justify-content: center; align-items: center;">
+        <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+            <i class="fa-solid fa-rocket"></i> Get Started Free
+        </a>
+        <a href="{{ url_for('login') }}" class="btn btn-secondary btn-lg">
+            <i class="fa-solid fa-right-to-bracket"></i> Login
+        </a>
+    </div>
+
+    <!-- Feature Highlights -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-top: 5rem; text-align: left;">
+        <div class="card">
+            <div style="font-size: 2rem; color: var(--primary); margin-bottom: 0.75rem;"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+            <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Skill Matching</h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted);">Compares your resume against specific job descriptions to highlight matched and missing keywords.</p>
+        </div>
+        
+        <div class="card">
+            <div style="font-size: 2rem; color: var(--secondary); margin-bottom: 0.75rem;"><i class="fa-solid fa-gauge-high"></i></div>
+            <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">ATS Readiness Score</h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted);">Get a 0-100 overall score evaluating structure, contact details, word count, and section headings.</p>
+        </div>
+        
+        <div class="card">
+            <div style="font-size: 2rem; color: var(--accent); margin-bottom: 0.75rem;"><i class="fa-solid fa-folder-tree"></i></div>
+            <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Resume Management</h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted);">Store all your parsed resumes, track score improvements, and manage target roles in one dashboard.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
